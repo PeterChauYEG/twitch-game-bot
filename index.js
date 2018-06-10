@@ -25,6 +25,13 @@ let knownCommands = { clue, guess }
 const graphqlEndpoint = 'http://localhost:8081/graphql'
 
 // graphql queries
+const getAnswers = `{
+  answers {
+    text,
+    id
+  }
+}`
+
 const getClues = `{
   clues {
     text,
@@ -32,9 +39,8 @@ const getClues = `{
   }
 }`
 
-const getAnswers = `{
-  answers {
-    text,
+const setWinner = `mutation {
+  setWinner(username: "Laboratory One") {
     id
   }
 }`
@@ -68,15 +74,19 @@ function guess (target, context, params) {
       // convert it to lower case
       answer = answer.toLowerCase()
 
+      // check if the user's guess is right
       if (userGuess === answer) {
-        // Join the params into a string:
-        const msg = `@${context.username}: Correct guess!`
+        // set user as the game winner
+        graphqlClient.request(setWinner).then(data => {
+          // Join the params into a string:
+          const msg = `@${context.username}: Correct guess!`
 
-        // send it back to the correct place:
-        sendMessage(target, context, msg)
+          // send it back to the correct place:
+          sendMessage(target, context, msg)
 
-        // let the server know that someone got the right answer:
-        console.log(`User ${context.username} (${context['user-id']}) got the right answer at: ${context['tmi-sent-ts']}`)
+          // let the server know that someone got the right answer:
+          console.log(`User ${context.username} (${context['user-id']}) got the right answer at: ${context['tmi-sent-ts']}`)
+        })
       }
     })
   } else {
