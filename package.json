@@ -4,11 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "babel-node index.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "babel-preset-env": "^1.7.0",
+    "graphql-request": "^1.6.0",
     "tmi.js": "^1.2.1"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0"
   }
 }

@@ -1,7 +1,7 @@
+import { request, GraphQLClient } from 'graphql-request'
+import tmi from 'tmi.js'
 
-const tmi = require('tmi.js')
-
-// globals
+// TWITCH VARS -----------------------------------------------------------------
 const token = 'oauth:6yiqzgnpwirq1jbd9i5keull44q5jt'
 
 // valid commands start with:
@@ -19,48 +19,66 @@ let opts = {
 }
 
 // These are commands the bot knows
-let knownCommands = { clue, echo, guess }
+let knownCommands = { clue, guess }
 
+// GRAPHQL VARS ----------------------------------------------------------------
+const graphqlEndpoint = 'http://localhost:8081/graphql'
+
+// graphql queries
+const getClues = `{
+  clues {
+    text,
+    id
+  }
+}`
+
+const getAnswers = `{
+  answers {
+    text,
+    id
+  }
+}`
+
+// FUNCTIONS -------------------------------------------------------------------
 // Function called when 'clue' command is issued:
 function clue (target, context, params) {
-  const msg = 'What is love?'
-
-  // send it back to the correct place:
-  sendMessage(target, context, msg)
-}
-
-// Function called when 'echo' command is issued:
-function echo (target, context, params) {
-
-  // if there's something to echo:
-  if (params.length) {
-    // Join the params into a string:
-    const msg = params.join(' ')
+  // get clues from db
+  graphqlClient.request(getClues).then(data => {
+    const msg = data.clues[0].text
 
     // send it back to the correct place:
     sendMessage(target, context, msg)
-  } else {
-    // nothing to echo
-    console.log(`* Nothing to echo`)
-  }
+  })
 }
 
 // Function called when 'guess' command is issued:
 function guess (target, context, params) {
   // if there's something to echo:
   if (params.length) {
-    const userGuess = params.join(' ')
+    // join the guess into a string
+    let userGuess = params.join(' ')
 
-    if (userGuess.toLowerCase() === `baby don't hurt me`) {
-      // Join the params into a string:
-      const msg = `@${context.username}: Correct guess!`
+    // convert it to lower case
+    userGuess = userGuess.toLowerCase()
 
-      // send it back to the correct place:
-      sendMessage(target, context, msg)
+    // get answers from db
+    graphqlClient.request(getAnswers).then(data => {
+      let answer = data.answers[0].text
 
-      // let the server know that someone got the right answer:
-      console.log(`User ${context.username} (${context['user-id']}) got the right answer at: ${context['tmi-sent-ts']}`)
-    }
+      // convert it to lower case
+      answer = answer.toLowerCase()
+
+      if (userGuess === answer) {
+        // Join the params into a string:
+        const msg = `@${context.username}: Correct guess!`
+
+        // send it back to the correct place:
+        sendMessage(target, context, msg)
+
+        // let the server know that someone got the right answer:
+        console.log(`User ${context.username} (${context['user-id']}) got the right answer at: ${context['tmi-sent-ts']}`)
+      }
+    })
   } else {
     // nothing to echo
     console.log(`* Nothing to echo`)
@@ -76,16 +94,6 @@ function sendMessage (target, context, message) {
   }
 }
 
-// Create a client with our options:
-let client = new tmi.client(opts)
-
-// Register our event handliers
-client.on('message', onMessageHandler)
-client.on('connected', onConnectedHandler)
-client.on('disconnected', onDisconnectedHandler)
-
-// Connect to twitch:
-client.connect()
 
 // Called every time a message comes in:
 function onMessageHandler (target, context, msg, self) {
@@ -128,3 +136,21 @@ function onConnectedHandler (addr, port) {
 function onDisconnectedHandler (reason) {
   console.log(`* Womp womp, disconnected: ${reason}`)
 }
+
+// GRAPHQL CLIENT ---------------------------------------------------------------
+// Create a graphql client
+const graphqlClient = new GraphQLClient(graphqlEndpoint, {
+  headers: {}
+})
+
+// TWITCH CLIENT ---------------------------------------------------------------
+// Create a client with our options:
+let client = new tmi.client(opts)
+
+// Register our event handliers
+client.on('message', onMessageHandler)
+client.on('connected', onConnectedHandler)
+client.on('disconnected', onDisconnectedHandler)
+
+// Connect to twitch:
+client.connect()
