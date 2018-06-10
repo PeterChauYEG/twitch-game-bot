@@ -1,0 +1,14 @@
+{
+  "name": "twitch_game",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "tmi.js": "^1.2.1"
+  }
+}
