@@ -39,8 +39,8 @@ const getClues = `{
   }
 }`
 
-const setWinner = `mutation {
-  setWinner(username: "Laboratory One") {
+const setWinner = `mutation setWinner($username: String!) {
+  setWinner(username: $username) {
     id
   }
 }`
@@ -76,8 +76,12 @@ function guess (target, context, params) {
 
       // check if the user's guess is right
       if (userGuess === answer) {
+        const variables = {
+          username: context.username
+        }
+
         // set user as the game winner
-        graphqlClient.request(setWinner).then(data => {
+        graphqlClient.request(setWinner, variables).then(data => {
           // Join the params into a string:
           const msg = `@${context.username}: Correct guess!`
 
